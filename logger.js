@@ -1,10 +1,11 @@
 const bunyan = require('bunyan');
 
 const packageInfo = require('./package');
+const config = require('./config');
 
 const logger = bunyan.createLogger({
     name: packageInfo.name,
-    level: process.env.LOG_LEVEL || 'info',
+    level: config.log.level || 'info',
     serializers: bunyan.stdSerializers
 });
 

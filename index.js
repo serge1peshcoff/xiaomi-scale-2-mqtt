@@ -3,8 +3,9 @@ const mqtt = require('mqtt');
 
 const MiScale = require('./scale');
 const logger = require('./logger');
+const config = require('./config');
 
-const client  = mqtt.connect('mqtt://localhost')
+const client  = mqtt.connect(config.mqtt.url)
 
 const miscale = new MiScale();
 
@@ -19,7 +20,7 @@ miscale.on('data', (scaleFull)  => {
     }
 
     logger.info({ scale }, 'Writing stable data');
-    client.publish('mi.scale2', JSON.stringify(scale));
+    client.publish(config.mqtt.topic, JSON.stringify(scale));
     logger.info('Data sent');
 });
 
