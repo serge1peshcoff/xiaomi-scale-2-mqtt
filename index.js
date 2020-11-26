@@ -14,17 +14,7 @@ miscale.startScanning();
 
 miscale.on('data', (scaleFull)  => {
     const scale = _.omit(scaleFull, ['svcData', 'manufacturerData']);
-    //logger.debug({ scale }, 'Got scale data');
-    logger.debug({ impedance: scale.impedance }, 'Got scale data');
-
-    if (!scale.isStabilized || scale.loadRemoved || scale.impedance === 0 || scale.impedance >= 3000) {
-        logger.trace({
-            isStabilized: scale.isStabilized,
-            loadRemoved: scale.loadRemoved,
-            impedance: scale.impedance
-        }, 'Unstable data, skipping');
-        return;
-    }
+    logger.debug({ scale }, 'Got scale data');
 
     const measurement = Measurement.createWithParams(scaleFull, config.user);
     const result = measurement.result();

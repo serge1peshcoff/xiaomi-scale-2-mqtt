@@ -2,15 +2,15 @@ const EventEmitter = require('events');
 const noble = require('@abandonware/noble');
 
 const logger = require('./logger');
+const config = require('./config');
 
 class MiScale extends EventEmitter {
-    constructor(macAddr) {
-        logger.debug({ macAddr }, 'Creating MiScale instance')
+    constructor() {
+        logger.debug('Creating MiScale instance')
         super();
         let self = this;
 
-        this._macAddr = macAddr;
-        this._scales = new Array();
+        this.lastMeasurement = {};
 
         noble.on('discover', function (foo) {
             self._nobleDiscoverListener(foo);
@@ -18,31 +18,21 @@ class MiScale extends EventEmitter {
     };
 
     _scaleListener(peripheral) {
-        logger.trace(peripheral, 'Got data')
-
-        let scale = new Object();
-
-        scale.address = peripheral.address;
-
         if (peripheral.advertisement.serviceData.length === 0) {
-          return;
-        }
-
-        // Assume only single service is available on scale.
-        scale.svcUUID = peripheral.advertisement.serviceData[0].uuid;
-        scale.svcData = peripheral.advertisement.serviceData[0].data;
-        scale.manufacturerData = peripheral.advertisement.manufacturerData;
-
-        // Is it duplicated packet?
-        if(this._scales[scale.address] &&
-           this._scales[scale.address].svcData.compare(scale.svcData) == 0) {
+            logger.trace('No peripheral data, skipping.');
             return;
         }
 
-        //Save scale object in duplication lookup table.
-        this._scales[scale.address] = scale;
+        logger.trace(peripheral, 'Got data')
 
-        //Parse service data.
+        const scale = {
+            address: peripheral.address,
+            svcUUID: peripheral.advertisement.serviceData[0].uuid,
+            svcData: peripheral.advertisement.serviceData[0].data,
+            manufacturerData: peripheral.advertisement.manufacturerData
+        };
+
+        // Parse service data.
         let svcData = scale.svcData;
 
         // byte 1:
@@ -83,6 +73,34 @@ class MiScale extends EventEmitter {
         }
 
         scale.impedance = (svcData[10] * 256 + svcData[9]);
+
+        if (!scale.isStabilized || scale.loadRemoved || scale.impedance === 0 || scale.impedance >= 3000) {
+            logger.trace({
+                isStabilized: scale.isStabilized,
+                loadRemoved: scale.loadRemoved,
+                impedance: scale.impedance
+            }, 'Unstable data, skipping');
+            return;
+        }
+
+        // Checking the last time we got the message from this MAC address
+        if (this.lastMeasurement[peripheral.address]) {
+            const now = Date.now();
+            const then = this.lastMeasurement[peripheral.address];
+            const diff = now - then;
+            if (diff <= 1000 * config.scale.debounce) {
+                logger.debug({
+                    address: peripheral.address,
+                    now,
+                    then,
+                    diff
+                }, 'Not enough time passed, skipping.');
+                return;
+            }
+        }
+
+        this.lastMeasurement[peripheral.address] = Date.now(); // in ms
+
         this.emit('data', scale);
     };
 

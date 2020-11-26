@@ -6,6 +6,9 @@ module.exports = {
     log: {
         level: process.env.LOG_LEVEL || 'info'
     },
+    scale: {
+        debounce: process.env.DEBOUNCE || 30
+    },
     user: {
         dateOfBirth: process.env.DATE_OF_BIRTH,
         height: parseFloat(process.env.HEIGHT),
