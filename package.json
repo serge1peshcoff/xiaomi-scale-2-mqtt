@@ -12,6 +12,7 @@
     "@abandonware/noble": "^1.9.2-10",
     "bunyan": "^1.8.14",
     "lodash": "^4.17.20",
+    "moment": "^2.29.1",
     "mqtt": "^4.2.5"
   }
 }

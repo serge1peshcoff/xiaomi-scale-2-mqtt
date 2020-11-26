@@ -18,7 +18,7 @@ class MiScale extends EventEmitter {
     };
 
     _scaleListener(peripheral) {
-        logger.debug(peripheral, 'Got data')
+        logger.trace(peripheral, 'Got data')
 
         let scale = new Object();
 
@@ -33,7 +33,7 @@ class MiScale extends EventEmitter {
         scale.svcData = peripheral.advertisement.serviceData[0].data;
         scale.manufacturerData = peripheral.advertisement.manufacturerData;
 
-        //Is it duplicated packet?
+        // Is it duplicated packet?
         if(this._scales[scale.address] &&
            this._scales[scale.address].svcData.compare(scale.svcData) == 0) {
             return;
@@ -67,7 +67,7 @@ class MiScale extends EventEmitter {
         scale.isStabilized = ((svcData[1] & (1<<5)) !== 0) ? true : false;
         scale.loadRemoved = ((svcData[1] & (1<<7)) !== 0) ? true : false;
 
-        if((svcData[0] & (1<<4)) !== 0) { // Chinese Catty
+        if ((svcData[0] & (1<<4)) !== 0) { // Chinese Catty
             scale.unit = "jin";
         } else if ((svcData[0] & 0x0F) === 0x03) { // Imperial pound
             scale.unit = "lbs";
@@ -78,10 +78,11 @@ class MiScale extends EventEmitter {
         }
 
         scale.weight = (svcData[12] * 256 + svcData[11]) / 100;
-        if(scale.unit === "kg") { //Convert chinese Catty to kg.
+        if (scale.unit === "kg") { //Convert chinese Catty to kg.
             scale.weight /= 2;
         }
 
+        scale.impedance = (svcData[10] * 256 + svcData[9]);
         this.emit('data', scale);
     };
 

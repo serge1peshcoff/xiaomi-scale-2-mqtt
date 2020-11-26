@@ -5,5 +5,10 @@ module.exports = {
     },
     log: {
         level: process.env.LOG_LEVEL || 'info'
+    },
+    user: {
+        dateOfBirth: process.env.DATE_OF_BIRTH,
+        height: parseFloat(process.env.HEIGHT),
+        sex: process.env.SEX
     }
 }

@@ -4,6 +4,7 @@ const mqtt = require('mqtt');
 const MiScale = require('./scale');
 const logger = require('./logger');
 const config = require('./config');
+const Measurement = require('./measurement');
 
 const client  = mqtt.connect(config.mqtt.url)
 
@@ -13,14 +14,23 @@ miscale.startScanning();
 
 miscale.on('data', (scaleFull)  => {
     const scale = _.omit(scaleFull, ['svcData', 'manufacturerData']);
-    logger.info({ scale }, 'Got scale data');
+    //logger.debug({ scale }, 'Got scale data');
+    logger.debug({ impedance: scale.impedance }, 'Got scale data');
 
-    if (!scale.isStabilized) {
+    if (!scale.isStabilized || scale.loadRemoved || scale.impedance === 0 || scale.impedance >= 3000) {
+        logger.trace({
+            isStabilized: scale.isStabilized,
+            loadRemoved: scale.loadRemoved,
+            impedance: scale.impedance
+        }, 'Unstable data, skipping');
         return;
     }
 
-    logger.info({ scale }, 'Writing stable data');
-    client.publish(config.mqtt.topic, JSON.stringify(scale));
+    const measurement = Measurement.createWithParams(scaleFull, config.user);
+    const result = measurement.result();
+
+    logger.info({ result }, 'Writing stable data');
+    client.publish(config.mqtt.topic, JSON.stringify(result));
     logger.info('Data sent');
 });
 
