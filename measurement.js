@@ -40,6 +40,9 @@ class Measurement {
             unit: this.unit,
             weight: this.weight,
             impedance: this.impedance,
+            age: this.age,
+            height: this.height,
+            sex: this.sex
         };
 
         if (!this.age || !this.height || !this.sex) {
