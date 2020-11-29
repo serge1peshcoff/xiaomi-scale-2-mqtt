@@ -47,7 +47,7 @@ class MiScale extends EventEmitter {
         // byte 11-12 - weight (little endian) / 200
         scale.date = new Date(
             svcData[3] * 256 + svcData[2], // year
-            svcData[4], // month
+            svcData[4] - 1, // month
             svcData[5], // day
             svcData[6], // hour
             svcData[7], // minutes
